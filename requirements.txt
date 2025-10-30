@@ -1,0 +1,6 @@
+transformers
+accelerate
+sentencepiece
+protobuf
+urllib3
+urllib3-secure-extra
