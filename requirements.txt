@@ -4,3 +4,7 @@ sentencepiece
 protobuf
 urllib3
 urllib3-secure-extra
+qdrant-client
+fastapi
+uvicorn[standard]
+python-multipart
