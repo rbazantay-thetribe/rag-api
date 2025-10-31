@@ -34,6 +34,32 @@ Qdrant data is persisted in a local Docker volume named `qdrant_storage`.
 curl http://localhost:8000/hello
 ```
 
+### Embeddings
+- Batch embeddings: `POST /embeddings`
+
+Request body (JSON):
+
+```json
+{
+  "texts": ["hello world", "bonjour le monde"],
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "tokenizer": null,
+  "normalize": true
+}
+```
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "texts": ["hello world", "bonjour le monde"],
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "normalize": true
+  }'
+```
+
 ## FastAPI Hello World (Local Docker build)
 If you prefer running only the API container manually:
 

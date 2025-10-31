@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from qdrant_client import QdrantClient
 from qdrant_client import models as qmodels
+from app.services.embedding import embed_texts
 
 
 router = APIRouter(tags=["qdrant"], prefix="")
@@ -115,9 +116,10 @@ def add_point(collection_name: str, req: AddPointRequest) -> AddPointResponse:
 
 
 class SearchCollectionRequest(BaseModel):
-    collection_name: str
-    query: str
+    query_text: Optional[str] = None
+    query_vector: Optional[List[float]] = None
     k: int = 10
+    model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 class SearchCollectionResponse(BaseModel):
@@ -131,11 +133,35 @@ class SearchCollectionResponse(BaseModel):
     description="Search a collection in Qdrant",
     response_model=SearchCollectionResponse,
 )
-def search_collection(req: SearchCollectionRequest) -> SearchCollectionResponse:
+def search_collection(collection_name: str, req: SearchCollectionRequest) -> SearchCollectionResponse:
     qdrant_url = os.environ.get("QDRANT_URL", "http://qdrant:6333")
     try:
         client = QdrantClient(url=qdrant_url)
-        results = client.search(collection_name=req.collection_name, query=req.query, k=req.k)
+
+        # Build query vector
+        if req.query_vector is not None:
+            query_vector: List[float] = req.query_vector
+        elif req.query_text is not None and req.query_text.strip():
+            emb = embed_texts([req.query_text], model=req.model)
+            vectors = emb.get("vectors", [])
+            if not vectors or not vectors[0]:
+                raise HTTPException(status_code=400, detail="Empty embedding for query_text")
+            query_vector = vectors[0]
+        else:
+            raise HTTPException(status_code=400, detail="Provide query_vector or query_text")
+
+        scored_points = client.search(
+            collection_name=collection_name,
+            query_vector=query_vector,
+            limit=req.k,
+            with_payload=True,
+        )
+
+        results: List[Dict[str, Any]] = [
+            {"id": p.id, "score": p.score, "payload": getattr(p, "payload", None)} for p in scored_points
+        ]
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Qdrant error: {exc}")
     return SearchCollectionResponse(message="Search results", results=results)
