@@ -8,3 +8,4 @@ qdrant-client
 fastapi
 uvicorn[standard]
 python-multipart
+ollama
