@@ -27,8 +27,8 @@ hf_logging.set_verbosity_error()
 # Chargement du modèle de résumé
 summarizer = pipeline(
     "summarization",
-    model="csebuetnlp/mT5_multilingual_XLSum",
-    tokenizer="csebuetnlp/mT5_multilingual_XLSum",
+    model="plguillou/t5-base-fr-sum-cnndm",
+    tokenizer="plguillou/t5-base-fr-sum-cnndm",
     use_fast=False,
 )
 

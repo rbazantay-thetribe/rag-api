@@ -12,7 +12,7 @@ router = APIRouter(tags=["summarization"], prefix="")
 class SummarizeRequest(BaseModel):
     text: str = Field(..., description="Raw text to summarize")
     model: str = Field(
-        default="csebuetnlp/mT5_multilingual_XLSum",
+        default="plguillou/t5-base-fr-sum-cnndm",
         description="HuggingFace model id",
     )
     tokenizer: Optional[str] = Field(
@@ -31,6 +31,15 @@ class SummarizeRequest(BaseModel):
     max_length: int = Field(default=120, ge=1)
     do_sample: bool = Field(default=False)
     return_parts: bool = Field(default=False)
+    batch_size: int = Field(default=8, ge=1, description="Batch size for summarization calls")
+    num_beams: int = Field(default=4, ge=1, description="Beam size for decoding")
+    no_repeat_ngram_size: int = Field(default=3, ge=0, description="No-repeat n-gram size")
+    length_penalty: float = Field(default=1.0, description="Length penalty for decoding")
+    repetition_penalty: float = Field(default=1.1, description="Repetition penalty for decoding")
+    prompt_prefix: Optional[str] = Field(
+        default="Résume fidèlement en français, sans inventer de faits.",
+        description="Optional instruction prefix prepended to each chunk",
+    )
 
 
 class SummarizeResponse(BaseModel):
@@ -65,6 +74,12 @@ def summarize(req: SummarizeRequest) -> SummarizeResponse:
         max_length=req.max_length,
         do_sample=req.do_sample,
         return_parts=req.return_parts,
+        batch_size=req.batch_size,
+        num_beams=req.num_beams,
+        no_repeat_ngram_size=req.no_repeat_ngram_size,
+        length_penalty=req.length_penalty,
+        repetition_penalty=req.repetition_penalty,
+        prompt_prefix=req.prompt_prefix,
     )
     return SummarizeResponse(**result)
 
@@ -80,14 +95,20 @@ def summarize(req: SummarizeRequest) -> SummarizeResponse:
 )
 def summarize_form(
     text: str = Form(..., description="Raw text to summarize"),
-    model: str = Form("csebuetnlp/mT5_multilingual_XLSum"),
-    tokenizer: Optional[str] = Form(None),
+    model: str = Form("plguillou/t5-base-fr-sum-cnndm"),
+    tokenizer: Optional[str] = Form("plguillou/t5-base-fr-sum-cnndm"),
     chunk_size: int = Form(1200),
     chunk_overlap: int = Form(100),
     min_length: int = Form(40),
     max_length: int = Form(120),
     do_sample: bool = Form(False),
     return_parts: bool = Form(False),
+    batch_size: int = Form(8),
+    num_beams: int = Form(4),
+    no_repeat_ngram_size: int = Form(3),
+    length_penalty: float = Form(1.0),
+    repetition_penalty: float = Form(1.1),
+    prompt_prefix: Optional[str] = Form("Résume fidèlement en français, sans inventer de faits."),
 ) -> SummarizeResponse:
     if chunk_overlap >= chunk_size:
         return SummarizeResponse(
@@ -107,6 +128,12 @@ def summarize_form(
         max_length=max_length,
         do_sample=do_sample,
         return_parts=return_parts,
+        batch_size=batch_size,
+        num_beams=num_beams,
+        no_repeat_ngram_size=no_repeat_ngram_size,
+        length_penalty=length_penalty,
+        repetition_penalty=repetition_penalty,
+        prompt_prefix=prompt_prefix,
     )
     return SummarizeResponse(**result)
 

@@ -42,10 +42,12 @@ services:
       # Add your own env here (e.g. model names, API keys, Qdrant URL)
       - QDRANT_URL=http://qdrant:6333
       - OLLAMA_HOST=http://ollama:11434
+      - HF_HOME=/models/hf
     ports:
       - "8000:8000"
     volumes:
       - .:/app
+      - hf_cache:/models/hf
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       qdrant:
@@ -55,6 +57,8 @@ services:
 
 volumes:
   qdrant_storage:
+    driver: local
+  hf_cache:
     driver: local
 
 
