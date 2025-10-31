@@ -9,3 +9,7 @@ fastapi
 uvicorn[standard]
 python-multipart
 ollama
+langchain
+langchain-community
+langchain-core
+langchain-ollama
